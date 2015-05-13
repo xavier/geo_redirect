@@ -103,13 +103,29 @@ module GeoRedirect
     end
 
     def host_by_country(country)
-      hosts = @config.select { |_k, v| Array(v[:countries]).include?(country) }
-      hosts.keys.first || :default
+      host_by_country_cache.fetch(country, :default)
+    end
+
+    def host_by_country_cache
+      @host_by_country_cache ||= begin
+        @config.each_with_object({}) do |(key, host_definition), hash|
+          Array(host_definition[:countries]).each do |country|
+            hash[country] = key
+          end
+        end
+      end
     end
 
     def host_by_hostname(hostname)
-      hosts = @config.select { |_k, v| v[:host] == hostname }
-      hosts.keys.first || :default
+      host_by_hostname_cache.fetch(hostname, :default)
+    end
+
+    def host_by_hostname_cache
+      @host_by_hostname_cache ||= begin
+        @config.each_with_object({}) do |(key, host_definition), hash|
+          hash[host_definition[:host]] = key
+        end
+      end
     end
 
     def hostname_by_host(host)
